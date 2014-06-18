@@ -70,6 +70,22 @@ size_t last_whitespace(string tempcode)
     ultimatesize = (ultimatesize < temptab ? ultimatesize : temptab);
     return ultimatesize;
 }
+string first_word(string& tempcode)
+    {
+        char firstchar = tempcode[0];
+        while(firstchar == ' '||firstchar == '\t'||firstchar == '\n'){
+            tempcode.erase(0, 1);
+            firstchar = tempcode[0];
+        }
+        size_t ultimatesize = first_whitespace(tempcode);
+        string evenmoretempcode = tempcode;
+        //if not at end of string, cut off part and eval, else eval
+        if(ultimatesize != string::npos){
+            evenmoretempcode.erase(ultimatesize, tempcode.length());
+        }else{
+            return evenmoretempcode;
+        }
+    }
 //determines what to do with each section of parsed string
 //how to understand: test each statement
 //do not hope to understand this mess
@@ -86,11 +102,28 @@ void slot::stringeval(string word)
 }
 void slot::wordeval(string word, string& tempcode)
 {
+    //yay macros
     if(!macromap[word].empty()){
-        if(tempcode.empty())
-            tempcode = macromap[word];
-        else
-            tempcode = macromap[word]+ " " + tempcode;
+        if(first_word(tempcode).compare("enclose") == 0){
+            tempcode.erase(0, first_whitespace(tempcode));
+            if(tempcode.empty())
+            tempcode = "\"" + macromap[word] + "\"";
+            else
+            tempcode = "\"" + macromap[word] + "\"" + tempcode;
+        }else if(first_word(tempcode).compare("ignoremac") == 0){
+            if(currentobj.back()->code.compare("1")){
+                if(tempcode.empty())
+                tempcode = macromap[word];
+                else
+                tempcode = macromap[word]+ " " + tempcode;
+            }
+        }else{
+            if(tempcode.empty())
+                tempcode = macromap[word];
+            else
+                tempcode = macromap[word]+ " " + tempcode;
+        }
+        //that was an ordeal...
     }else{
         macromap.erase(macromap.find(word));
         if(word.compare("print") == 0){
@@ -299,7 +332,7 @@ int main()
 
     slot a;
     a.slotset();
-    a.set_code(" \" a print\" \"b\" dprevmarco b");
+    a.set_code(" \"a print 1 cat ignoremac\" \"cat\" dprevmarco cat");
     a.eval();
     //cout << a.slotlist.size();
 
