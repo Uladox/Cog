@@ -42,9 +42,15 @@ struct slot
     void eval();
     void wordeval(string word, string& tempcode);
     void stringeval(string word);
+    slot prev_obj();
 };
-
-size_t first_whitespace(string tempcode){
+slot slot::prev_obj(){
+    list<slot*>::iterator refspot = currentobj.begin();
+    advance(refspot, currentobj.size() - 2);
+    return **refspot;
+}
+size_t first_whitespace(string tempcode)
+{
     size_t tempspace = tempcode.find(" ");
     size_t temptab = tempcode.find("\t");
     size_t tempnewln = tempcode.find("\n");
@@ -54,7 +60,8 @@ size_t first_whitespace(string tempcode){
     return ultimatesize;
 }
 
-size_t last_whitespace(string tempcode){
+size_t last_whitespace(string tempcode)
+{
     size_t tempspace = tempcode.rfind(" ");
     size_t temptab = tempcode.rfind("\t");
     size_t tempnewln = tempcode.rfind("\n");
@@ -184,6 +191,10 @@ void slot::wordeval(string word, string& tempcode)
                 macromap[macrostring] = macrostring;
             else
                 macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
+        }else if (word.compare("dprevmarco") == 0){
+            string macromeaning = prev_obj().code;
+            string macroname = currentobj.back()->code;
+            macromap[macroname] = macromeaning;
         }else{
             //if it is not a statement, it must be a variable and a new
             //slot is created at current scope.
@@ -288,9 +299,9 @@ int main()
 
     slot a;
     a.slotset();
-    a.set_code(" b a delprev print");
+    a.set_code(" \" a print\" \"b\" dprevmarco b");
     a.eval();
-    cout << a.slotlist.size();
+    //cout << a.slotlist.size();
 
     //cout <<     a.slotlist.size();
     //a.set_code("\"a print\" eval");
