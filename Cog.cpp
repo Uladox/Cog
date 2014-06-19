@@ -46,8 +46,8 @@ struct slot
     void inset_obj(string word);
 };
 slot slot::prev_obj(){
-    list<slot*>::iterator refspot = currentobj.begin();
-    advance(refspot, currentobj.size() - 2);
+    list<slot*>::iterator refspot = currentlist.back()->currentobj.begin();
+    advance(refspot, currentlist.back()->currentobj.size() - 2);
     return **refspot;
 }
 void slot::inset_obj(string word)
@@ -56,7 +56,7 @@ void slot::inset_obj(string word)
     tempslot.set_code(word);
     currentlist.back()->slotlist.push_back(tempslot);
     currentlist.back()->slotlist.back().slotset();
-    currentobj.push_back(&currentlist.back()->slotlist.back());
+    currentlist.back()->currentobj.push_back(&currentlist.back()->slotlist.back());
 }
 size_t first_whitespace(string tempcode)
 {
@@ -107,10 +107,12 @@ void slot::stringeval(string word)
     tempslot.set_code(word);
     currentlist.back()->slotlist.push_back(tempslot);
     currentlist.back()->slotlist.back().slotset();
-    currentobj.push_back(&currentlist.back()->slotlist.back());
+    currentlist.back()->currentobj.push_back(&currentlist.back()->slotlist.back());
 }
 void slot::wordeval(string word, string& tempcode)
 {
+    #define LASTOBJ currentlist.back()->currentobj
+    #define LASTSLOT currentlist.back()->slotlist
     //yay macros
     if(!macromap[word].empty()){
         if(first_word(tempcode).compare("enclose") == 0){
@@ -120,7 +122,7 @@ void slot::wordeval(string word, string& tempcode)
             else
             tempcode = "\"" + macromap[word] + "\"" + tempcode;
         }else if(first_word(tempcode).compare("ignoremac") == 0){
-            if(currentobj.back()->code.compare("1")){
+            if(LASTOBJ.back()->code.compare("1")){
                 if(tempcode.empty())
                 tempcode = macromap[word];
                 else
@@ -137,87 +139,92 @@ void slot::wordeval(string word, string& tempcode)
         macromap.erase(macromap.find(word));
 
         if(word.compare("print") == 0){
-            cout << currentobj.back()->code;
+            cout << LASTOBJ.back()->code;
         }else if(word.compare("copy") == 0){
-           currentobj.push_back(currentobj.back());
+           LASTOBJ.push_back(LASTOBJ.back());
         }else if (word.compare("eval") == 0){
-            currentobj.back()->eval();
+            LASTOBJ.back()->eval();
         }else if (word.compare("compare") == 0){
-            int compared = prev_obj().code.compare(currentobj.back()->code);
+            int compared = prev_obj().code.compare(LASTOBJ.back()->code);
             slot tempslot;
             tempslot.set_code("" + compared);
             currentlist.back()->slotlist.push_back(tempslot);
             currentlist.back()->slotlist.back().slotset();
-            currentobj.push_back(&currentlist.back()->slotlist.back());
+            LASTOBJ.push_back(&currentlist.back()->slotlist.back());
         }else if (word.compare("(") == 0){
             slot tempslot;
-            currentlist.back()->slotlist.push_back(tempslot);
-            currentlist.back()->slotlist.back().slotset();
-            currentlist.push_back(&currentlist.back()->slotlist.back());
+            LASTSLOT.push_back(tempslot);
+            LASTSLOT.back().slotset();
+            currentlist.push_back(&LASTSLOT.back());
         }else if (word.compare("<<(") == 0){
-            currentlist.push_back(currentobj.back());
+            currentlist.push_back(LASTOBJ.back());
         }else if (word.compare(">>(") == 0){
             slot tempslot;
-            currentlist.back()->slotlist.push_back(tempslot);
-            currentlist.back()->slotlist.back().slotset();
-            currentlist.push_back(&currentlist.back()->slotlist.back());
-            currentlist.back()->slotlist.push_back(*currentobj.back());
+
+            LASTSLOT.push_back(tempslot);
+            LASTSLOT.back().slotset();
+            currentlist.push_back(&LASTSLOT.back());
+            LASTSLOT.push_back(*LASTOBJ.back());
+            LASTOBJ.push_back(&LASTSLOT.back());
+
         }else if (word.compare(")") == 0){
             if(currentlist.size() == 0){
                 cout << "\nError, Too many )\'s?";
                 exit (EXIT_FAILURE);
             }
-            currentobj.push_back(currentlist.back());
+            slot tempslot = *currentlist.back();
             currentlist.pop_back();
+            LASTSLOT.push_back(tempslot);
+            LASTOBJ.push_back(&LASTSLOT.back());
         }else if (word.compare("cdr") == 0){
-            slot tempslot = *currentobj.back();
-            slotlist.push_back(tempslot);
-            slotlist.back().slotset();
-            currentobj.push_back(&slotlist.back());
-            currentobj.back()->slotlist.pop_front();
+            slot tempslot = *LASTOBJ.back();
+            LASTSLOT.push_back(tempslot);
+            LASTSLOT.back().slotset();
+            LASTOBJ.push_back(&LASTSLOT.back());
+            LASTOBJ.back()->LASTSLOT.pop_front();
         }else if (word.compare("car") == 0){
-            slot tempslot = currentobj.back()->slotlist.front();
-            slotlist.push_back(tempslot);
-            slotlist.back().slotset();
-            currentobj.push_back(&slotlist.back());
+            slot tempslot = *LASTOBJ.back()->currentobj.front();
+            LASTSLOT.push_back(tempslot);
+            LASTSLOT.back().slotset();
+            LASTOBJ.push_back(&LASTOBJ.back()->slotlist.front());
         }else if (word.compare("reverse") == 0){
-            slot tempslot = *currentobj.back();
+            slot tempslot = *LASTOBJ.back();
             slotlist.push_back(tempslot);
             slotlist.back().slotset();
-            currentobj.push_back(&slotlist.back());
-            currentobj.back()->slotlist.reverse();
+            LASTOBJ.push_back(&slotlist.back());
+            LASTOBJ.back()->slotlist.reverse();
         }else if (word.compare("pop_back") == 0){
-            currentobj.pop_back();
+            LASTOBJ.pop_back();
         }else if (word.compare("to_end") == 0){
             currentlist.back()->slotlist.push_back(slotlist.back());
-            currentobj.push_back(&currentlist.back()->slotlist.back());
+            LASTOBJ.push_back(&currentlist.back()->slotlist.back());
         }else if (word.compare("pop_prev") == 0){
-            list<slot*>::iterator refspot = currentobj.begin();
-            advance(refspot, currentobj.size() - 2);
-            currentobj.erase(refspot);
+            list<slot*>::iterator refspot = LASTOBJ.begin();
+            advance(refspot, LASTOBJ.size() - 2);
+            LASTOBJ.erase(refspot);
         }else if (word.compare("delete") == 0){
             list<slot>::iterator spot = slotlist.end();
-            slot* lastslot = currentobj.back();
+            slot* lastslot = LASTOBJ.back();
             while(&*spot != lastslot){
                 spot--;
             }
-            for(list<slot*>::iterator refspot = currentobj.end(); refspot != currentobj.begin(); --refspot){
+            for(list<slot*>::iterator refspot = LASTOBJ.end(); refspot != LASTOBJ.begin(); --refspot){
                 if(*refspot == lastslot){
-                    currentobj.erase(refspot);
+                    LASTOBJ.erase(refspot);
                 }
             }
             slotlist.erase(spot);
         }else if (word.compare("delprev") == 0){
            list<slot>::iterator spot = slotlist.end();
-           list<slot*>::iterator prevspot = currentobj.begin();
-           advance(prevspot, currentobj.size() - 2);
+           list<slot*>::iterator prevspot = LASTOBJ.begin();
+           advance(prevspot, LASTOBJ.size() - 2);
             slot* lastslot = *prevspot;
             while(&*spot != lastslot){
                 spot--;
             }
-            for(list<slot*>::iterator refspot = currentobj.end(); refspot != currentobj.begin(); --refspot){
+            for(list<slot*>::iterator refspot = LASTOBJ.end(); refspot != LASTOBJ.begin(); --refspot){
                 if(*refspot == lastslot){
-                    currentobj.erase(refspot);
+                    LASTOBJ.erase(refspot);
                 }
             }
             slotlist.erase(spot);
@@ -231,10 +238,10 @@ void slot::wordeval(string word, string& tempcode)
         // }
         }else if (word.compare("this") == 0){
             currentlist.back()->slotlist.push_back(*this);
-            currentobj.push_back(&currentlist.back()->slotlist.back());
+            LASTOBJ.push_back(&currentlist.back()->slotlist.back());
         }else if (word.compare("defmacro") == 0){
             //tempcode = macromap[currentobj.back()->code] + " " + tempcode;
-            string macrostring = currentobj.back()->code;
+            string macrostring = LASTOBJ.back()->code;
             string macrostring2 = macrostring;
             size_t macrosize = last_whitespace(macrostring);
             if(macrosize == string::npos)
@@ -243,22 +250,22 @@ void slot::wordeval(string word, string& tempcode)
                 macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
         }else if (word.compare("dprevmacro") == 0){
             string macromeaning = prev_obj().code;
-            string macroname = currentobj.back()->code;
+            string macroname = LASTOBJ.back()->code;
             macromap[macroname] = macromeaning;
         }else if (word.compare("!") == 0){
-            if(currentobj.back()->code.compare("0")){
-                currentobj.back()->code = "1";
+            if(LASTOBJ.back()->code.compare("0")){
+                LASTOBJ.back()->code = "1";
             }else{
-                currentobj.back()->code = "0";
+                LASTOBJ.back()->code = "0";
             }
         }else if (word.compare(">") == 0){
-           if(atof(currentobj.back()->code.c_str())>atof(prev_obj().code.c_str())){
+           if(atof(LASTOBJ.back()->code.c_str())>atof(prev_obj().code.c_str())){
                 inset_obj("1");
             }else{
                 inset_obj("0");
             }
         }else if (word.compare("<") == 0){
-           if(atof(currentobj.back()->code.c_str())<atof(prev_obj().code.c_str())){
+           if(atof(LASTOBJ.back()->code.c_str())<atof(prev_obj().code.c_str())){
                 inset_obj("1");
             }else{
                 inset_obj("0");
@@ -364,7 +371,7 @@ int main()
     //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" \"a print 0 0 compare ! cat ignoremac\" \"cat\" dprevmacro cat");
+    a.set_code(" q ( a B C ) pop_back print ");
     a.eval();
     //cout << a.slotlist.size();
 
