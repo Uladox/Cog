@@ -43,11 +43,20 @@ struct slot
     void wordeval(string word, string& tempcode);
     void stringeval(string word);
     slot prev_obj();
+    void inset_obj(string word);
 };
 slot slot::prev_obj(){
     list<slot*>::iterator refspot = currentobj.begin();
     advance(refspot, currentobj.size() - 2);
     return **refspot;
+}
+void slot::inset_obj(string word)
+{
+    slot tempslot;
+    tempslot.set_code(word);
+    currentlist.back()->slotlist.push_back(tempslot);
+    currentlist.back()->slotlist.back().slotset();
+    currentobj.push_back(&currentlist.back()->slotlist.back());
 }
 size_t first_whitespace(string tempcode)
 {
@@ -126,12 +135,20 @@ void slot::wordeval(string word, string& tempcode)
         //that was an ordeal...
     }else{
         macromap.erase(macromap.find(word));
+
         if(word.compare("print") == 0){
             cout << currentobj.back()->code;
         }else if(word.compare("copy") == 0){
            currentobj.push_back(currentobj.back());
         }else if (word.compare("eval") == 0){
             currentobj.back()->eval();
+        }else if (word.compare("compare") == 0){
+            int compared = prev_obj().code.compare(currentobj.back()->code);
+            slot tempslot;
+            tempslot.set_code("" + compared);
+            currentlist.back()->slotlist.push_back(tempslot);
+            currentlist.back()->slotlist.back().slotset();
+            currentobj.push_back(&currentlist.back()->slotlist.back());
         }else if (word.compare("(") == 0){
             slot tempslot;
             currentlist.back()->slotlist.push_back(tempslot);
@@ -224,18 +241,32 @@ void slot::wordeval(string word, string& tempcode)
                 macromap[macrostring] = macrostring;
             else
                 macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
-        }else if (word.compare("dprevmarco") == 0){
+        }else if (word.compare("dprevmacro") == 0){
             string macromeaning = prev_obj().code;
             string macroname = currentobj.back()->code;
             macromap[macroname] = macromeaning;
+        }else if (word.compare("!") == 0){
+            if(currentobj.back()->code.compare("0")){
+                currentobj.back()->code = "1";
+            }else{
+                currentobj.back()->code = "0";
+            }
+        }else if (word.compare(">") == 0){
+           if(atof(currentobj.back()->code.c_str())>atof(prev_obj().code.c_str())){
+                inset_obj("1");
+            }else{
+                inset_obj("0");
+            }
+        }else if (word.compare("<") == 0){
+           if(atof(currentobj.back()->code.c_str())<atof(prev_obj().code.c_str())){
+                inset_obj("1");
+            }else{
+                inset_obj("0");
+            }
         }else{
             //if it is not a statement, it must be a variable and a new
             //slot is created at current scope.
-            slot tempslot;
-            tempslot.set_code(word);
-            currentlist.back()->slotlist.push_back(tempslot);
-            currentlist.back()->slotlist.back().slotset();
-            currentobj.push_back(&currentlist.back()->slotlist.back());
+            inset_obj(word);
         }
     }
 }
@@ -329,10 +360,11 @@ void slot::wordeval(string word, string& tempcode)
 
 int main()
 {
-
+    //double d = atof("abc90");
+    //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" \"a print 1 cat ignoremac\" \"cat\" dprevmarco cat");
+    a.set_code(" \"a print 0 0 compare ! cat ignoremac\" \"cat\" dprevmacro cat");
     a.eval();
     //cout << a.slotlist.size();
 
