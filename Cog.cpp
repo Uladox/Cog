@@ -32,7 +32,7 @@ struct slot
     string code;
     void slotset(){
         currentlist.push_back(this);
-        currentobj.push_back(this);
+        //currentobj.push_back(this);
     }
     void set_code(string newcode){
         code = newcode;
@@ -172,27 +172,27 @@ void slot::wordeval(string word, string& tempcode)
                 cout << "\nError, Too many )\'s?";
                 exit (EXIT_FAILURE);
             }
-            slot tempslot = *currentlist.back();
+            slot* tempslot = currentlist.back();
             currentlist.pop_back();
-            LASTSLOT.push_back(tempslot);
-            LASTOBJ.push_back(&LASTSLOT.back());
+            //LASTSLOT.push_back(tempslot);
+            LASTOBJ.push_back(tempslot);
         }else if (word.compare("cdr") == 0){
             slot tempslot = *LASTOBJ.back();
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             LASTOBJ.push_back(&LASTSLOT.back());
-            LASTOBJ.back()->LASTSLOT.pop_front();
+            LASTOBJ.back()->currentobj.pop_front();
         }else if (word.compare("car") == 0){
             slot tempslot = *LASTOBJ.back()->currentobj.front();
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
-            LASTOBJ.push_back(&LASTOBJ.back()->slotlist.front());
+            LASTOBJ.push_back(&LASTSLOT.back());
         }else if (word.compare("reverse") == 0){
             slot tempslot = *LASTOBJ.back();
-            slotlist.push_back(tempslot);
-            slotlist.back().slotset();
-            LASTOBJ.push_back(&slotlist.back());
-            LASTOBJ.back()->slotlist.reverse();
+            LASTSLOT.push_back(tempslot);
+            LASTSLOT.back().slotset();
+            LASTSLOT.back().currentobj.reverse();
+            LASTOBJ.push_back(&LASTSLOT.back());
         }else if (word.compare("pop_back") == 0){
             LASTOBJ.pop_back();
         }else if (word.compare("to_end") == 0){
@@ -253,7 +253,7 @@ void slot::wordeval(string word, string& tempcode)
             string macroname = LASTOBJ.back()->code;
             macromap[macroname] = macromeaning;
         }else if (word.compare("!") == 0){
-            if(LASTOBJ.back()->code.compare("0")){
+            if(LASTOBJ.back()->code.compare("0") == 0){
                 LASTOBJ.back()->code = "1";
             }else{
                 LASTOBJ.back()->code = "0";
@@ -371,8 +371,9 @@ int main()
     //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" q ( a B C ) pop_back print ");
+    a.set_code(" 1 ! print");
     a.eval();
+   // cout << a.slotlist.size();
     //cout << a.slotlist.size();
 
     //cout <<     a.slotlist.size();
