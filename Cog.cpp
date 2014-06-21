@@ -160,13 +160,10 @@ void slot::wordeval(string word, string& tempcode)
             currentlist.push_back(LASTOBJ.back());
         }else if (word.compare(">>(") == 0){
             slot tempslot;
-
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
+            LASTSLOT.back().currentobj.push_back(LASTOBJ.back());
             currentlist.push_back(&LASTSLOT.back());
-            LASTSLOT.push_back(*LASTOBJ.back());
-            LASTOBJ.push_back(&LASTSLOT.back());
-
         }else if (word.compare(")") == 0){
             if(currentlist.size() == 0){
                 cout << "\nError, Too many )\'s?";
@@ -371,7 +368,7 @@ int main()
     //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" 1 ! print");
+    a.set_code(" ( a <<( q b x ) ) car car print");
     a.eval();
    // cout << a.slotlist.size();
     //cout << a.slotlist.size();
