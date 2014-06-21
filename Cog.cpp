@@ -249,6 +249,32 @@ void slot::wordeval(string word, string& tempcode)
             string macromeaning = prev_obj().code;
             string macroname = LASTOBJ.back()->code;
             macromap[macroname] = macromeaning;
+            //Massive math block i means long int, d is double
+        }else if (word.compare("+d") == 0){
+            double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) + strtod(prev_obj().code.c_str(), NULL);
+            inset_obj(to_string(double_contents));
+        }else if (word.compare("+i") == 0){
+            long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) + strtol(prev_obj().code.c_str(), NULL, 0);
+            inset_obj(to_string(long_contents));
+        }else if (word.compare("-d") == 0){
+            double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) - strtod(prev_obj().code.c_str(), NULL);
+            inset_obj(to_string(double_contents));
+        }else if (word.compare("-i") == 0){
+            long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) - strtol(prev_obj().code.c_str(), NULL, 0);
+            inset_obj(to_string(long_contents));
+        }else if (word.compare("*d") == 0){
+            double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) * strtod(prev_obj().code.c_str(), NULL);
+            inset_obj(to_string(double_contents));
+        }else if (word.compare("*i") == 0){
+            long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) * strtol(prev_obj().code.c_str(), NULL, 0);
+            inset_obj(to_string(long_contents));
+        }else if (word.compare("/d") == 0){
+            double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) / strtod(prev_obj().code.c_str(), NULL);
+            inset_obj(to_string(double_contents));
+        }else if (word.compare("/i") == 0){
+            long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) / strtol(prev_obj().code.c_str(), NULL, 0);
+            inset_obj(to_string(long_contents));
+        //Math block close
         }else if (word.compare("!") == 0){
             if(LASTOBJ.back()->code.compare("0") == 0){
                 LASTOBJ.back()->code = "1";
@@ -364,11 +390,11 @@ void slot::wordeval(string word, string& tempcode)
 
 int main()
 {
-    //double d = atof("abc90");
+    double d = strtol("90.3", NULL, 0);
     //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" ( a <<( q b x ) ) car car print");
+    a.set_code(" 3.0 2.0 2.0 /i print");
     a.eval();
    // cout << a.slotlist.size();
     //cout << a.slotlist.size();
