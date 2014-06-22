@@ -115,14 +115,14 @@ void slot::wordeval(string word, string& tempcode)
     #define LASTSLOT currentlist.back()->slotlist
     //yay macros
     if(!macromap[word].empty()){
-        if(first_word(tempcode).compare("enclose") == 0){
+        if(first_word(tempcode) == "enclose"){
             tempcode.erase(0, first_whitespace(tempcode));
             if(tempcode.empty())
             tempcode = "\"" + macromap[word] + "\"";
             else
             tempcode = "\"" + macromap[word] + "\"" + tempcode;
-        }else if(first_word(tempcode).compare("ignoremac") == 0){
-            if(LASTOBJ.back()->code.compare("1")){
+        }else if(first_word(tempcode) == "ignoremac"){
+            if(LASTOBJ.back()->code == "0"){
                 if(tempcode.empty())
                 tempcode = macromap[word];
                 else
@@ -138,33 +138,33 @@ void slot::wordeval(string word, string& tempcode)
     }else{
         macromap.erase(macromap.find(word));
 
-        if(word.compare("print") == 0){
+        if(word == "print"){
             cout << LASTOBJ.back()->code;
-        }else if(word.compare("copy") == 0){
+        }else if(word == "copy"){
            LASTOBJ.push_back(LASTOBJ.back());
-        }else if (word.compare("eval") == 0){
+        }else if (word == "eval"){
             LASTOBJ.back()->eval();
-        }else if (word.compare("compare") == 0){
+        }else if (word == "compare"){
             int compared = prev_obj().code.compare(LASTOBJ.back()->code);
             slot tempslot;
             tempslot.set_code("" + compared);
             currentlist.back()->slotlist.push_back(tempslot);
             currentlist.back()->slotlist.back().slotset();
             LASTOBJ.push_back(&currentlist.back()->slotlist.back());
-        }else if (word.compare("(") == 0){
+        }else if (word == "("){
             slot tempslot;
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             currentlist.push_back(&LASTSLOT.back());
-        }else if (word.compare("<<(") == 0){
+        }else if (word == "<<("){
             currentlist.push_back(LASTOBJ.back());
-        }else if (word.compare(">>(") == 0){
+        }else if (word == ">>("){
             slot tempslot;
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             LASTSLOT.back().currentobj.push_back(LASTOBJ.back());
             currentlist.push_back(&LASTSLOT.back());
-        }else if (word.compare(")") == 0){
+        }else if (word == ")"){
             if(currentlist.size() == 0){
                 cout << "\nError, Too many )\'s?";
                 exit (EXIT_FAILURE);
@@ -173,33 +173,42 @@ void slot::wordeval(string word, string& tempcode)
             currentlist.pop_back();
             //LASTSLOT.push_back(tempslot);
             LASTOBJ.push_back(tempslot);
-        }else if (word.compare("cdr") == 0){
+        }else if (word == "cdr"){
             slot tempslot = *LASTOBJ.back();
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             LASTOBJ.push_back(&LASTSLOT.back());
             LASTOBJ.back()->currentobj.pop_front();
-        }else if (word.compare("car") == 0){
+        }else if (word == "car"){
             slot tempslot = *LASTOBJ.back()->currentobj.front();
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             LASTOBJ.push_back(&LASTSLOT.back());
-        }else if (word.compare("reverse") == 0){
+        }else if (word == "reverse"){
             slot tempslot = *LASTOBJ.back();
             LASTSLOT.push_back(tempslot);
             LASTSLOT.back().slotset();
             LASTSLOT.back().currentobj.reverse();
             LASTOBJ.push_back(&LASTSLOT.back());
-        }else if (word.compare("pop_back") == 0){
+        }else if (word == "uproot"){
+            list<slot*>::iterator spot = LASTOBJ.back()->currentobj.begin();
+            //cout << LASTOBJ.back()->currentobj.size();
+            size_t currlistsize = LASTOBJ.back()->currentobj.size();
+            for(int i =  0; i < currlistsize; ++i){
+                LASTSLOT.push_back(**spot);
+                LASTOBJ.push_back(&LASTSLOT.back());
+                advance(spot, 1);
+            }
+        }else if (word == "pop_back"){
             LASTOBJ.pop_back();
-        }else if (word.compare("to_end") == 0){
+        }else if (word == "to_end"){
             currentlist.back()->slotlist.push_back(slotlist.back());
             LASTOBJ.push_back(&currentlist.back()->slotlist.back());
-        }else if (word.compare("pop_prev") == 0){
+        }else if (word == "pop_prev"){
             list<slot*>::iterator refspot = LASTOBJ.begin();
             advance(refspot, LASTOBJ.size() - 2);
             LASTOBJ.erase(refspot);
-        }else if (word.compare("delete") == 0){
+        }else if (word == "delete"){
             list<slot>::iterator spot = slotlist.end();
             slot* lastslot = LASTOBJ.back();
             while(&*spot != lastslot){
@@ -211,8 +220,8 @@ void slot::wordeval(string word, string& tempcode)
                 }
             }
             slotlist.erase(spot);
-        }else if (word.compare("delprev") == 0){
-           list<slot>::iterator spot = slotlist.end();
+        }else if (word == "delprev"){
+           list<slot>::iterator spot = LASTSLOT.end();
            list<slot*>::iterator prevspot = LASTOBJ.begin();
            advance(prevspot, LASTOBJ.size() - 2);
             slot* lastslot = *prevspot;
@@ -224,8 +233,8 @@ void slot::wordeval(string word, string& tempcode)
                     LASTOBJ.erase(refspot);
                 }
             }
-            slotlist.erase(spot);
-        }else if (word.compare("clean") == 0){
+            LASTSLOT.erase(spot);
+        }else if (word == "clean"){
             //backref = currentobj.back();
             //for(int i)
             //list<slot>::iterator spot = slotlist.end();
@@ -233,10 +242,10 @@ void slot::wordeval(string word, string& tempcode)
             //  if(&*spot != backref)
         //         slotlist.erase(spot);
         // }
-        }else if (word.compare("this") == 0){
+        }else if (word == "this"){
             currentlist.back()->slotlist.push_back(*this);
             LASTOBJ.push_back(&currentlist.back()->slotlist.back());
-        }else if (word.compare("defmacro") == 0){
+        }else if (word == "defmacro"){
             //tempcode = macromap[currentobj.back()->code] + " " + tempcode;
             string macrostring = LASTOBJ.back()->code;
             string macrostring2 = macrostring;
@@ -245,49 +254,62 @@ void slot::wordeval(string word, string& tempcode)
                 macromap[macrostring] = macrostring;
             else
                 macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
-        }else if (word.compare("dprevmacro") == 0){
+        }else if (word == "dprevmacro"){
             string macromeaning = prev_obj().code;
             string macroname = LASTOBJ.back()->code;
             macromap[macroname] = macromeaning;
             //Massive math block i means long int, d is double
-        }else if (word.compare("+d") == 0){
+        }else if (word == "macify"){
+            tempcode = LASTOBJ.back()->code + " " + tempcode;
+            list<slot>::iterator spot = LASTSLOT.end();
+            slot* lastslot = LASTOBJ.back();
+            while(&*spot != lastslot){
+                spot--;
+            }
+            for(list<slot*>::iterator refspot = LASTOBJ.end(); refspot != LASTOBJ.begin(); --refspot){
+                if(*refspot == lastslot){
+                    LASTOBJ.erase(refspot);
+                }
+            }
+            LASTSLOT.erase(spot);
+        }else if (word == "+d"){
             double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) + strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
-        }else if (word.compare("+i") == 0){
+        }else if (word == "+i"){
             long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) + strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
-        }else if (word.compare("-d") == 0){
+        }else if (word == "-d"){
             double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) - strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
-        }else if (word.compare("-i") == 0){
+        }else if (word == "-i"){
             long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) - strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
-        }else if (word.compare("*d") == 0){
+        }else if (word == "*d"){
             double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) * strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
-        }else if (word.compare("*i") == 0){
+        }else if (word == "*i"){
             long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) * strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
-        }else if (word.compare("/d") == 0){
+        }else if (word == "/d"){
             double double_contents = strtod(LASTOBJ.back()->code.c_str(), NULL) / strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
-        }else if (word.compare("/i") == 0){
+        }else if (word == "/i"){
             long int long_contents = strtol(LASTOBJ.back()->code.c_str(), NULL, 0) / strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
         //Math block close
-        }else if (word.compare("!") == 0){
+        }else if (word == "!"){
             if(LASTOBJ.back()->code.compare("0") == 0){
                 LASTOBJ.back()->code = "1";
             }else{
                 LASTOBJ.back()->code = "0";
             }
-        }else if (word.compare(">") == 0){
+        }else if (word == ">"){
            if(atof(LASTOBJ.back()->code.c_str())>atof(prev_obj().code.c_str())){
                 inset_obj("1");
             }else{
                 inset_obj("0");
             }
-        }else if (word.compare("<") == 0){
+        }else if (word == "<"){
            if(atof(LASTOBJ.back()->code.c_str())<atof(prev_obj().code.c_str())){
                 inset_obj("1");
             }else{
@@ -394,7 +416,8 @@ int main()
     //cout << d;
     slot a;
     a.slotset();
-    a.set_code(" 3.0 2.0 2.0 /i print");
+    a.set_code(" \") reverse car delprev delprev )>>\" defmacro ( ( cat dog mouse ) ) >>( car uproot )>> print");
+    //a.set_code("( a b c d e f g h i j k l m n o p q r s t u v w x y z ) uproot print");
     a.eval();
    // cout << a.slotlist.size();
     //cout << a.slotlist.size();
