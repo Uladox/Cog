@@ -1,0 +1,5 @@
+(
+") reverse car delprev delprev )>>" defmacro
+") delete )end" defmacro
+"a print testmacro" defmacro
+)end
