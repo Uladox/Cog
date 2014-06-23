@@ -21,6 +21,7 @@
 #include <iterator>
 #include <map>
 #include <fstream>
+#include <math.h>
 using namespace std;
 
 struct slot
@@ -109,7 +110,7 @@ void slot::stringeval(string word)
 void slot::wordeval(string word, string& tempcode)
 {
     #define LASTSLOT currentlist.back()->slotlist
-    //yay macros
+    //yay macros!
     if(!macromap[word].empty()){
         if(first_word(tempcode) == "enclosemac"){
             tempcode.erase(0, first_whitespace(tempcode));
@@ -228,13 +229,7 @@ void slot::wordeval(string word, string& tempcode)
             advance(refspot, LASTSLOT.size() - 2);
             LASTSLOT.erase(refspot);
         }else if (word == "clean"){
-            //backref = currentobj.back();
-            //for(int i)
-            //list<slot>::iterator spot = slotlist.end();
-            //for(int i = currentobj.size(); i > 1; --i ){
-            //  if(&*spot != backref)
-        //         slotlist.erase(spot);
-        // }
+            LASTSLOT.clear();
         }else if (word == "this"){
             LASTSLOT.push_back(*this);
         }else if (word == "defmacro"){
@@ -256,6 +251,21 @@ void slot::wordeval(string word, string& tempcode)
             list<slot>::iterator refspot = LASTSLOT.begin();
             advance(refspot, LASTSLOT.size() - 2);
             LASTSLOT.erase(refspot);
+        }else if (word == "stradd"){
+            inset_obj(prev_obj().code + LASTSLOT.back().code);
+        }else if (word == "strerase"){
+            list<slot>::iterator spot = LASTSLOT.begin();
+            advance(spot, LASTSLOT.size()-3);
+            cout << "(" << prev_obj().code << "," << LASTSLOT.back().code<<"\n";
+            slot tempslot = *spot;
+            inset_obj(tempslot.code.erase(strtol(prev_obj().code.c_str(), NULL, 0),strtol(LASTSLOT.back().code.c_str(), NULL, 0)));
+        }else if(word == "strfind"){
+            inset_obj(to_string(prev_obj().code.find(LASTSLOT.back().code)));
+        }else if(word == "strfindprev"){
+            list<slot>::iterator spot = LASTSLOT.begin();
+            advance(spot, LASTSLOT.size()- 3);
+            slot tempslot = *spot;
+            inset_obj(to_string(tempslot.code.find(LASTSLOT.back().code)));
         }else if (word == "+d"){
             double double_contents = strtod(LASTSLOT.back().code.c_str(), NULL) + strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
@@ -279,6 +289,13 @@ void slot::wordeval(string word, string& tempcode)
             inset_obj(to_string(double_contents));
         }else if (word == "/i"){
             long int long_contents = strtol(LASTSLOT.back().code.c_str(), NULL, 0) / strtol(prev_obj().code.c_str(), NULL, 0);
+            inset_obj(to_string(long_contents));
+        //Math block close
+        }else if (word == "%d"){
+            double double_contents = fmod(strtod(LASTSLOT.back().code.c_str(), NULL), strtod(prev_obj().code.c_str(), NULL));
+            inset_obj(to_string(double_contents));
+        }else if (word == "%i"){
+            long int long_contents = strtol(LASTSLOT.back().code.c_str(), NULL, 0) % strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
         //Math block close
         }else if (word == "!"){
@@ -404,7 +421,7 @@ int main()
     a.slotset();
     //a.set_code(" \") reverse car delprev delprev )>>\" defmacro ( ( cat dog mouse ) ) >>( car uproot )>> print");
     //a.set_code("( a b c d e f g h i j k l m n o p q r s t u v w x y z ) uproot print");
-    a.set_code(" SML import testmacro");
+    a.set_code(" abcdefghijklmnop d strfind pop_prev m strfindprev pop_prev strerase print");
     a.eval();
     //cout << a.currentlist.back()->currentobj.back()->currentobj.front()->code;
    // cout << a.slotlist.size();
