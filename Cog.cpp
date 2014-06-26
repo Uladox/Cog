@@ -42,11 +42,24 @@ struct slot
     void wordeval(string word, string& tempcode);
     void stringeval(string word);
     slot prev_obj();
+    slot slot_last(int pos);
+    slot neg_slotlast(int pos);
     void inset_obj(string word);
+    string object_code();
 };
 slot slot::prev_obj(){
     list<slot>::iterator refspot = currentlist.back()->slotlist.begin();
     advance(refspot, currentlist.back()->slotlist.size() - 2);
+    return *refspot;
+}
+slot slot::slot_last(int pos){
+    list<slot>::iterator refspot = slotlist.begin();
+    advance(refspot, slotlist.size() - pos);
+    return *refspot;
+}
+slot slot::neg_slotlast(int pos){
+    list<slot>::iterator refspot = slotlist.begin();
+    advance(refspot, pos);
     return *refspot;
 }
 void slot::inset_obj(string word)
@@ -54,6 +67,19 @@ void slot::inset_obj(string word)
     slot tempslot;
     tempslot.set_code(word);
     currentlist.back()->slotlist.push_back(tempslot);
+}
+string slot::object_code()
+{
+    string objcode;
+
+    int obs = slotlist.size();
+    for(int i = 0; i < obs; ++i){
+            objcode += "\"" + neg_slotlast(i).code + "\" ";
+            if(neg_slotlast(i).slotlist.size() != 0){
+            objcode += "<<( " + neg_slotlast(i).object_code() + ") ";
+        }
+    }
+    return objcode;
 }
 size_t first_whitespace(string tempcode)
 {
@@ -202,9 +228,9 @@ void slot::wordeval(string word, string& tempcode)
                 cout << "\nError, Too many )\'s?";
                 exit (EXIT_FAILURE);
             }
-            slot* tempslot = currentlist.back();
+            //slot* tempslot = currentlist.back();
             currentlist.pop_back();
-            LASTSLOT.push_back(*tempslot);
+            //LASTSLOT.push_back(*tempslot);
         }else if (word == "cdr"){
             slot tempslot = LASTSLOT.back();
             LASTSLOT.push_back(tempslot);
@@ -270,6 +296,10 @@ void slot::wordeval(string word, string& tempcode)
             list<slot>::iterator refspot = LASTSLOT.begin();
             advance(refspot, LASTSLOT.size() - 2);
             LASTSLOT.erase(refspot);
+        }else if (word == "to_str"){
+            inset_obj(object_code());
+        }else if(word == "strequal"){
+            inset_obj(to_string(LASTSLOT.back().code == prev_obj().code));
         }else if (word == "stradd"){
             inset_obj(prev_obj().code + LASTSLOT.back().code);
         }else if (word == "strerase"){
@@ -284,6 +314,8 @@ void slot::wordeval(string word, string& tempcode)
             advance(spot, LASTSLOT.size()- 3);
             slot tempslot = *spot;
             inset_obj(to_string(tempslot.code.find(LASTSLOT.back().code)));
+        }else if (word == "strnpos"){
+            inset_obj(to_string(string::npos));
         }else if (word == "+d"){
             double double_contents = strtod(LASTSLOT.back().code.c_str(), NULL) + strtod(prev_obj().code.c_str(), NULL);
             inset_obj(to_string(double_contents));
@@ -308,14 +340,18 @@ void slot::wordeval(string word, string& tempcode)
         }else if (word == "/i"){
             long int long_contents = strtol(LASTSLOT.back().code.c_str(), NULL, 0) / strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
-        //Math block close
         }else if (word == "%d"){
             double double_contents = fmod(strtod(LASTSLOT.back().code.c_str(), NULL), strtod(prev_obj().code.c_str(), NULL));
             inset_obj(to_string(double_contents));
         }else if (word == "%i"){
             long int long_contents = strtol(LASTSLOT.back().code.c_str(), NULL, 0) % strtol(prev_obj().code.c_str(), NULL, 0);
             inset_obj(to_string(long_contents));
-        //Math block close
+        }else if (word == "sqrtd"){
+            double double_contents = sqrt(strtod(LASTSLOT.back().code.c_str(), NULL));
+            inset_obj(to_string(double_contents));
+        }else if (word == "sqrti"){
+            long int long_contents = sqrt(strtol(LASTSLOT.back().code.c_str(), NULL, 0));
+            inset_obj(to_string(long_contents));
         }else if (word == "!"){
             if(LASTSLOT.back().code.compare("0") == 0){
                 LASTSLOT.back().code = "1";
@@ -445,7 +481,8 @@ int main()
     a.slotset();
     //a.set_code(" \") reverse car delprev delprev )>>\" defmacro ( ( cat dog mouse ) ) >>( car uproot )>> print");
     //a.set_code("( a b c d e f g h i j k l m n o p q r s t u v w x y z ) uproot print");
-    a.set_code(" \"abdssdds dssfre ffgfghhfg\" ( cur print ) ");
+    //a.set_code(" \"sd ffsd\" <<( a b c ( e f d <<( b c d ) ) <<( a b c ) ( v c r ) ) to_str print");
+    a.set_code("\"df\" \"e\" strfind strnpos strequal print");
     a.eval();
     //cout << a.currentlist.back()->currentobj.back()->currentobj.front()->code;
    // cout << a.slotlist.size();
