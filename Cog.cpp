@@ -46,6 +46,7 @@ struct slot
     slot neg_slotlast(int pos);
     void inset_obj(string word);
     string object_code();
+    string get_macs();
 };
 slot slot::prev_obj(){
     list<slot>::iterator refspot = currentlist.back()->slotlist.begin();
@@ -68,18 +69,42 @@ void slot::inset_obj(string word)
     tempslot.set_code(word);
     currentlist.back()->slotlist.push_back(tempslot);
 }
+string stradjust(string rawstring)
+{
+    size_t found = rawstring.find("\\");
+    while(found != string::npos){
+        rawstring.insert(found, "\\");
+        found = rawstring.find("\\", found+2);
+    }
+    found = rawstring.find("\"");
+    while(found != string::npos){
+        rawstring.insert(found, "\\");
+        found = rawstring.find("\"", found+2);
+    }
+    return rawstring;
+}
 string slot::object_code()
 {
     string objcode;
 
     int obs = slotlist.size();
     for(int i = 0; i < obs; ++i){
-            objcode += "\"" + neg_slotlast(i).code + "\" ";
+            objcode += "\"" + stradjust(neg_slotlast(i).code) + "\" ";
             if(neg_slotlast(i).slotlist.size() != 0){
             objcode += "<<( " + neg_slotlast(i).object_code() + ") ";
         }
     }
     return objcode;
+}
+string slot::get_macs()
+{
+    string macs;
+    macs += "( ";
+    for(map<string, string>::iterator maciter = macromap.begin(); maciter != macromap.end(); ++maciter){
+        macs += "\"" + stradjust(maciter->second) + " " + stradjust(maciter->first) + "\" defmacro ";
+    }
+    macs += ") dc";
+    return macs;
 }
 size_t first_whitespace(string tempcode)
 {
@@ -250,9 +275,9 @@ void slot::wordeval(string word, string& tempcode)
                 LASTSLOT.push_back(LASTSLOT.back());
                 advance(spot, 1);
             }
-        }else if (word == "pop_back"){
+        }else if (word == "dc"){
             LASTSLOT.pop_back();
-        }else if (word == "pop_prev"){
+        }else if (word == "dp"){
             list<slot>::iterator refspot = LASTSLOT.begin();
             advance(refspot, LASTSLOT.size() - 2);
             LASTSLOT.erase(refspot);
@@ -260,11 +285,15 @@ void slot::wordeval(string word, string& tempcode)
             LASTSLOT.clear();
         }else if (word == "this"){
             LASTSLOT.push_back(*this);
+        }else if (word == "tempcode"){
+            inset_obj(tempcode);
         }else if (word == "cur"){
             list<slot*> templist = currentlist;
             templist.pop_back();
             slot tempslot = *(templist.back());
-            tempslot.slotlist.pop_back();
+            int before = strtol(LASTSLOT.back().code.c_str(), NULL, 0);
+            for(int i = 0; i < before; i++)
+                tempslot.slotlist.pop_back();
             tempslot = tempslot.slotlist.back();
             LASTSLOT.push_back(tempslot);
         }else if (word == "defmacro"){
@@ -296,6 +325,8 @@ void slot::wordeval(string word, string& tempcode)
             list<slot>::iterator refspot = LASTSLOT.begin();
             advance(refspot, LASTSLOT.size() - 2);
             LASTSLOT.erase(refspot);
+        }else if (word == "get_macs"){
+            inset_obj(LASTSLOT.back().get_macs());
         }else if (word == "to_str"){
             inset_obj(object_code());
         }else if(word == "strequal"){
@@ -482,7 +513,7 @@ int main()
     //a.set_code(" \") reverse car delprev delprev )>>\" defmacro ( ( cat dog mouse ) ) >>( car uproot )>> print");
     //a.set_code("( a b c d e f g h i j k l m n o p q r s t u v w x y z ) uproot print");
     //a.set_code(" \"sd ffsd\" <<( a b c ( e f d <<( b c d ) ) <<( a b c ) ( v c r ) ) to_str print");
-    a.set_code("\"df\" \"e\" strfind strnpos strequal print");
+    a.set_code(" a b c ( 0 cur car print ) print");
     a.eval();
     //cout << a.currentlist.back()->currentobj.back()->currentobj.front()->code;
    // cout << a.slotlist.size();
