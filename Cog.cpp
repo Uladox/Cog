@@ -513,7 +513,7 @@ int main()
     //a.set_code(" \") reverse car delprev delprev )>>\" defmacro ( ( cat dog mouse ) ) >>( car uproot )>> print");
     //a.set_code("( a b c d e f g h i j k l m n o p q r s t u v w x y z ) uproot print");
     //a.set_code(" \"sd ffsd\" <<( a b c ( e f d <<( b c d ) ) <<( a b c ) ( v c r ) ) to_str print");
-    a.set_code(" a b c ( 0 cur car print ) print");
+    a.set_code(" \"SML\" import \" >>( cdr car )>> to_str dp macify lol\" defmacro ( b c d f e ) lol print");
     a.eval();
     //cout << a.currentlist.back()->currentobj.back()->currentobj.front()->code;
    // cout << a.slotlist.size();
