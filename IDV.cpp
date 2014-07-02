@@ -8,7 +8,7 @@ struct Sobject{
   bool die;
   thread sthread;
   void end(){
-    die = true;
+    sthread.join();
   }
   void run(){
     while(die != true){
@@ -19,7 +19,6 @@ struct Sobject{
   }
   void start(){
     sthread = thread (&Sobject::run, this);
-    sthread.join();
   }
 };
 
@@ -29,5 +28,7 @@ int main()
     a.inslot.set_code("a print  b print \"cat\" stradd print \"1 die\" defmacro");
     a.inslot.slotset();
     a.start();
+    string i;
+    cin >> i;
     a.end();
 }
