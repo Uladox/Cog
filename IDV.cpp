@@ -20,16 +20,6 @@ struct Sobject{
   }
 };
 
-list<Sobject*> killist;
-void killem (){
-  while (true) {
-    if(killist.size() != 0){
-      killist.front()->end();
-      killist.pop_front();
-     }
-  }
-}
-thread killthread (killem);
 
 void Sobject::run(){
     while(die != true){
@@ -37,7 +27,6 @@ void Sobject::run(){
       if(inslot.macromap["die"] == "1")
 	die = true;
     }
-    killist.push_back(this);
   }
 
 int main()
@@ -47,9 +36,8 @@ int main()
     a.inslot.slotset();
     a.start();
     //hack, DO NOT USE IN REAL PROJECTS!!!!!!
-    string n;
-    cin >> n;
-    exit(EXIT_SUCCESS);
-    cerr << "\nYou have choosen to exit";
-   
+    //a.sthread.join();
+    while (true) {
+      
+    }
 }
