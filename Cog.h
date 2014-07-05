@@ -6,6 +6,13 @@
 #include <list>
 using namespace std;
 
+struct macrokeeper
+{
+string inside;
+list<pair<string, macrokeeper>> macroslist;
+    string& operator[](string value);
+};
+
 struct slot
 {
     map<string, string> macromap;

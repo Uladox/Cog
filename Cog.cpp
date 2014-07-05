@@ -22,7 +22,45 @@
 #include <map>
 #include <fstream>
 #include <math.h>
+#include <utility>
+
 using namespace std;
+
+struct macrokeeper
+{
+    string inside;
+    list<pair<string, macrokeeper> > macroslist;
+    string& operator[](string value);
+};
+
+string& macrokeeper::operator[](string value){
+        bool found = false;
+        string* result;
+        //macroslist.size();
+        list<pair<string, macrokeeper> >::iterator iter = macroslist.begin();
+        if(macroslist.size() == 0){
+            macrokeeper tempkeeper;
+            pair<string, macrokeeper> tempair = make_pair(value, tempkeeper);
+            macroslist.push_back(tempair);
+            result = &macroslist.back().second.inside;
+            found = true;
+        }
+        while(found != true){
+            if(iter->first == value){
+                result = &iter->second.inside;
+                //.inside;
+                found = true;
+            }else if(iter == macroslist.end()){
+                macrokeeper tempkeeper;
+                macroslist.push_back(make_pair(value,tempkeeper));
+                result = &macroslist.back().second.inside;
+                found = true;
+            }else{
+                advance(iter, 1);
+            }
+        }
+        return *result;
+    }
 
 struct slot
 {
@@ -290,7 +328,9 @@ void slot::wordeval(string word, string& tempcode)
             LASTSLOT.erase(refspot);
         }else if (word == "clean"){
             LASTSLOT.clear();
-        }else if (word == "this"){
+        }else if(word == "die"){
+	  macromap["die"] = "1";
+	}else if (word == "this"){
             LASTSLOT.push_back(*this);
         }else if (word == "tempcode"){
             inset_obj(tempcode);

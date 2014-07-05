@@ -36,13 +36,35 @@ void add_sobj(string content){
   Sglobal.back().inslot.slotset();
   Sglobal_mutex.unlock();
 }
+std::mutex Start_mutex;
+void start_all(){
+  if(Start_mutex.try_lock()){
+    list<Sobject>::iterator startiter  = Sglobal.begin();
+    while(startiter != Sglobal.cend()){
+      (&*startiter)->start();
+      advance(startiter, 1);
+    }
+    Start_mutex.unlock();
+  }
+}
 
 int main()
 {
-  add_sobj("a print \"1 die\" defmacro");
-  Sglobal.back().start();
+
+    macrokeeper n;
+    n["cat"] = "mah";
+    cout << n["cat"];
+    system("pause");
+    //n["frog"];
+    //cout << n["cat"];
+    //cout << "woah";
+
+    /*
+  add_sobj(" a print 1 die ");
+  add_sobj("b print 1 die");
+  start_all();
     while (true) {
-      
-    }
+
+    }*/
 }
 
