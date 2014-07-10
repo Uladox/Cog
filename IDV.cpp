@@ -51,9 +51,9 @@ void start_all(){
 int main()
 {
 
-    macrokeeper n;
-    n["cat"] = "mah";
-    cout << n["cat"];
+    slot a;
+    a.mackeep.macl("woo")["lol"] = "catzzzz";
+    cout << a.mackeep.macl("woo")["lol"];
     system("pause");
     //n["frog"];
     //cout << n["cat"];

@@ -6,13 +6,6 @@
 #include <list>
 using namespace std;
 
-struct macrokeeper
-{
-string inside;
-list<pair<string, macrokeeper>> macroslist;
-    string& operator[](string value);
-};
-
 struct slot
 {
     map<string, string> macromap;
@@ -30,6 +23,14 @@ struct slot
     void inset_obj(string word);
     //string object_code();
     string get_macs();
+
+    struct macrokeeper
+    {
+        list<pair<string, slot>> macroslist;
+        string& operator[](string value);
+        list<pair<string, slot> >::iterator find(string value);
+        macrokeeper& macl(string value);
+    } mackeep;
 };
 
 

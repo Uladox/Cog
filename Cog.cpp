@@ -26,42 +26,6 @@
 
 using namespace std;
 
-struct macrokeeper
-{
-    string inside;
-    list<pair<string, macrokeeper> > macroslist;
-    string& operator[](string value);
-};
-
-string& macrokeeper::operator[](string value){
-        bool found = false;
-        string* result;
-        //macroslist.size();
-        list<pair<string, macrokeeper> >::iterator iter = macroslist.begin();
-        if(macroslist.size() == 0){
-            macrokeeper tempkeeper;
-            pair<string, macrokeeper> tempair = make_pair(value, tempkeeper);
-            macroslist.push_back(tempair);
-            result = &macroslist.back().second.inside;
-            found = true;
-        }
-        while(found != true){
-            if(iter->first == value){
-                result = &iter->second.inside;
-                //.inside;
-                found = true;
-            }else if(iter == macroslist.end()){
-                macrokeeper tempkeeper;
-                macroslist.push_back(make_pair(value,tempkeeper));
-                result = &macroslist.back().second.inside;
-                found = true;
-            }else{
-                advance(iter, 1);
-            }
-        }
-        return *result;
-    }
-
 struct slot
 {
     map<string, string> macromap;
@@ -85,7 +49,81 @@ struct slot
     void inset_obj(string word);
     string object_code();
     string get_macs();
+
+    struct macrokeeper
+    {
+        list<pair<string, slot> > macroslist;
+        string& operator[](string value);
+        list<pair<string, slot> >::iterator find(string value);
+        macrokeeper& macl(string value);
+    } mackeep;
+
 };
+
+string& slot::macrokeeper::operator[](string value){
+        bool found = false;
+        string* result;
+        list<pair<string, slot> >::iterator iter = macroslist.begin();
+        if(macroslist.size() == 0){
+            slot tempkeeper;
+            pair<string, slot> tempair = make_pair(value, tempkeeper);
+            macroslist.push_back(tempair);
+            result = &macroslist.back().second.code;
+            found = true;
+        }
+        while(found != true){
+            if(iter->first == value){
+                result = &iter->second.code;
+                //.inside;
+                found = true;
+            }else if(iter == macroslist.end()){
+                slot tempkeeper;
+                macroslist.push_back(make_pair(value,tempkeeper));
+                result = &macroslist.back().second.code;
+                found = true;
+            }else{
+                advance(iter, 1);
+            }
+        }
+        return *result;
+    }
+
+slot::macrokeeper& slot::macrokeeper::macl(string value){
+        bool found = false;
+        slot::macrokeeper* result;
+        list<pair<string, slot> >::iterator iter = macroslist.begin();
+        if(macroslist.size() == 0){
+            slot tempkeeper;
+            pair<string, slot> tempair = make_pair(value, tempkeeper);
+            macroslist.push_back(tempair);
+            result = &macroslist.back().second.mackeep;
+            found = true;
+        }
+        while(found != true){
+            if(iter->first == value){
+                result = &iter->second.mackeep;
+                //.inside;
+                found = true;
+            }else if(iter == macroslist.end()){
+                slot tempkeeper;
+                macroslist.push_back(make_pair(value,tempkeeper));
+                result = &macroslist.back().second.mackeep;
+                found = true;
+            }else{
+                advance(iter, 1);
+            }
+        }
+        return *result;
+    }
+// |  I could use auto here, but I would rather annoy you
+// v  I am so eval() Wahahahaha!!!
+list<pair<string, slot> >::iterator slot::macrokeeper::find(string value){
+    list<pair<string, slot> >::iterator iter = macroslist.begin();
+    while((iter->first != value) && (iter != macroslist.cend()))
+        advance(iter, 1);
+    return iter;
+}
+
 slot slot::prev_obj(){
     list<slot>::iterator refspot = currentlist.back()->slotlist.begin();
     advance(refspot, currentlist.back()->slotlist.size() - 2);
