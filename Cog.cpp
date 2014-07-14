@@ -28,7 +28,15 @@ using namespace std;
 
 struct slot
 {
-    map<string, string> macromap;
+    struct macrokeeper
+    {
+        list<pair<string, slot> > macroslist;
+        string& operator[](string value);
+        list<pair<string, slot> >::iterator find(string value);
+        void erase(list<pair<string, slot> >::iterator erasable);
+        macrokeeper& macl(string value);
+    } macromap;
+
     list<slot> slotlist; //original name, right?
     list<slot*> currentlist;
     string code;
@@ -49,14 +57,6 @@ struct slot
     void inset_obj(string word);
     string object_code();
     string get_macs();
-
-    struct macrokeeper
-    {
-        list<pair<string, slot> > macroslist;
-        string& operator[](string value);
-        list<pair<string, slot> >::iterator find(string value);
-        macrokeeper& macl(string value);
-    } mackeep;
 
 };
 
@@ -88,6 +88,7 @@ string& slot::macrokeeper::operator[](string value){
         return *result;
     }
 
+//returns slot, not string
 slot::macrokeeper& slot::macrokeeper::macl(string value){
         bool found = false;
         slot::macrokeeper* result;
@@ -96,18 +97,18 @@ slot::macrokeeper& slot::macrokeeper::macl(string value){
             slot tempkeeper;
             pair<string, slot> tempair = make_pair(value, tempkeeper);
             macroslist.push_back(tempair);
-            result = &macroslist.back().second.mackeep;
+            result = &macroslist.back().second.macromap;
             found = true;
         }
         while(found != true){
             if(iter->first == value){
-                result = &iter->second.mackeep;
+                result = &iter->second.macromap;
                 //.inside;
                 found = true;
             }else if(iter == macroslist.end()){
                 slot tempkeeper;
                 macroslist.push_back(make_pair(value,tempkeeper));
-                result = &macroslist.back().second.mackeep;
+                result = &macroslist.back().second.macromap;
                 found = true;
             }else{
                 advance(iter, 1);
@@ -123,7 +124,9 @@ list<pair<string, slot> >::iterator slot::macrokeeper::find(string value){
         advance(iter, 1);
     return iter;
 }
-
+void slot::macrokeeper::erase(list<pair<string,slot>>::iterator erasable){
+    macroslist.erase(erasable);
+}
 slot slot::prev_obj(){
     list<slot>::iterator refspot = currentlist.back()->slotlist.begin();
     advance(refspot, currentlist.back()->slotlist.size() - 2);
@@ -176,8 +179,8 @@ string slot::get_macs()
 {
     string macs;
     macs += "( ";
-    for(map<string, string>::iterator maciter = macromap.begin(); maciter != macromap.end(); ++maciter){
-        macs += "\"" + stradjust(maciter->second) + " " + stradjust(maciter->first) + "\" defmacro ";
+    for(list<pair<string, slot>>::iterator maciter = macromap.macroslist.begin(); maciter != macromap.macroslist.end(); ++maciter){
+        macs += "\"" + stradjust(maciter->second.code) + " " + stradjust(maciter->first) + "\" defmacro ";
     }
     macs += ") dc";
     return macs;

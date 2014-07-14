@@ -8,7 +8,15 @@ using namespace std;
 
 struct slot
 {
-    map<string, string> macromap;
+    struct macrokeeper
+    {
+        list<pair<string, slot>> macroslist;
+        string& operator[](string value);
+        list<pair<string, slot> >::iterator find(string value);
+        void erase(list<pair<string, slot> >::iterator erasable);
+        macrokeeper& macl(string value);
+    } macromap;
+
     list<slot> slotlist; //original name, right?
     list<slot*> currentlist;
     string code;
@@ -24,13 +32,7 @@ struct slot
     //string object_code();
     string get_macs();
 
-    struct macrokeeper
-    {
-        list<pair<string, slot>> macroslist;
-        string& operator[](string value);
-        list<pair<string, slot> >::iterator find(string value);
-        macrokeeper& macl(string value);
-    } mackeep;
+
 };
 
 

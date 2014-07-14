@@ -52,9 +52,12 @@ int main()
 {
 
     slot a;
-    a.mackeep.macl("woo")["lol"] = "catzzzz";
-    cout << a.mackeep.macl("woo")["lol"];
-    system("pause");
+    a.set_code("\"a print ap\" defmacro");
+    a.slotset();
+    a.eval();
+    cout << "\n" << a.get_macs();
+    string bnh;
+    cin >> bnh;
     //n["frog"];
     //cout << n["cat"];
     //cout << "woah";
