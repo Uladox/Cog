@@ -52,12 +52,11 @@ int main()
 {
 
     slot a;
-    a.set_code("\"a print ap\" defmacro");
+    a.set_code("( ( red dog . ) a . ) cat . ( cat a dog ) ? print");
     a.slotset();
     a.eval();
-    cout << "\n" << a.get_macs();
-    string bnh;
-    cin >> bnh;
+   // cout << a.macromap.get_slot("cat").macromap.get_slot("a").macromap.get_slot("dog").code;
+    //cout << "\n" << a.get_macs()<<"\n";
     //n["frog"];
     //cout << n["cat"];
     //cout << "woah";

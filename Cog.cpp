@@ -28,6 +28,7 @@ using namespace std;
 
 struct slot
 {
+    bool topmacros = true;
     struct macrokeeper
     {
         list<pair<string, slot> > macroslist;
@@ -35,6 +36,7 @@ struct slot
         list<pair<string, slot> >::iterator find(string value);
         void erase(list<pair<string, slot> >::iterator erasable);
         macrokeeper& macl(string value);
+        slot& get_slot(string value);
     } macromap;
 
     list<slot> slotlist; //original name, right?
@@ -57,7 +59,6 @@ struct slot
     void inset_obj(string word);
     string object_code();
     string get_macs();
-
 };
 
 string& slot::macrokeeper::operator[](string value){
@@ -88,34 +89,61 @@ string& slot::macrokeeper::operator[](string value){
         return *result;
     }
 
-//returns slot, not string
+//returns macrkeep, not string
 slot::macrokeeper& slot::macrokeeper::macl(string value){
-        bool found = false;
-        slot::macrokeeper* result;
-        list<pair<string, slot> >::iterator iter = macroslist.begin();
-        if(macroslist.size() == 0){
+    bool found = false;
+    slot::macrokeeper* result;
+    list<pair<string, slot> >::iterator iter = macroslist.begin();
+    if(macroslist.size() == 0){
+        slot tempkeeper;
+        pair<string, slot> tempair = make_pair(value, tempkeeper);
+        macroslist.push_back(tempair);
+        result = &macroslist.back().second.macromap;
+        found = true;
+    }
+    while(found != true){
+        if(iter->first == value){
+            result = &iter->second.macromap;
+            //.inside;
+            found = true;
+        }else if(iter == macroslist.end()){
             slot tempkeeper;
-            pair<string, slot> tempair = make_pair(value, tempkeeper);
-            macroslist.push_back(tempair);
+            macroslist.push_back(make_pair(value,tempkeeper));
             result = &macroslist.back().second.macromap;
             found = true;
+        }else{
+            advance(iter, 1);
         }
-        while(found != true){
-            if(iter->first == value){
-                result = &iter->second.macromap;
-                //.inside;
-                found = true;
-            }else if(iter == macroslist.end()){
-                slot tempkeeper;
-                macroslist.push_back(make_pair(value,tempkeeper));
-                result = &macroslist.back().second.macromap;
-                found = true;
-            }else{
-                advance(iter, 1);
-            }
-        }
-        return *result;
     }
+    return *result;
+}
+slot& slot::macrokeeper::get_slot(string value){
+    bool found = false;
+    slot* result;
+    list<pair<string, slot> >::iterator iter = macroslist.begin();
+    if(macroslist.size() == 0){
+        slot tempkeeper;
+        pair<string, slot> tempair = make_pair(value, tempkeeper);
+        macroslist.push_back(tempair);
+        result = &macroslist.back().second;
+        found = true;
+    }
+    while(found != true){
+        if(iter->first == value){
+            result = &iter->second;
+            //.inside;
+            found = true;
+        }else if(iter == macroslist.end()){
+            slot tempkeeper;
+            macroslist.push_back(make_pair(value,tempkeeper));
+            result = &macroslist.back().second;
+            found = true;
+        }else{
+            advance(iter, 1);
+        }
+    }
+    return *result;
+}
 // |  I could use auto here, but I would rather annoy you
 // v  I am so eval() Wahahahaha!!!
 list<pair<string, slot> >::iterator slot::macrokeeper::find(string value){
@@ -235,45 +263,66 @@ void slot::stringeval(string word)
     tempslot.set_code(word);
     currentlist.back()->slotlist.push_back(tempslot);
 }
-void slot::wordeval(string word, string& tempcode)
+/*
+bool macrohandler(list<slot> currobj, list<slot*> currlist, string word, string& tempcode)
 {
-    if(first_word(tempcode) == "\'"){
-        inset_obj(word);
-        tempcode.erase(0, first_whitespace(tempcode));
-    }
-    else if(first_word(tempcode) == "`"){
-        inset_obj(macromap[word]);
-        tempcode.erase(0, first_whitespace(tempcode));
-        if(macromap[word].empty())
-            macromap.erase(macromap.find(word));
-    }
-    #define LASTSLOT currentlist.back()->slotlist
-    //yay macros!
-    else if(!macromap[word].empty()){
-        if(first_word(tempcode) == "enclosemac"){
-            tempcode.erase(0, first_whitespace(tempcode));
-            if(tempcode.empty())
-            tempcode = "\"" + macromap[word] + "\"";
-            else
-            tempcode = "\"" + macromap[word] + "\"" + tempcode;
-        }else if(first_word(tempcode) == "ignoremac"){
-            tempcode.erase(0, first_whitespace(tempcode));
-            if(LASTSLOT.back().code == "0"){
-                if(tempcode.empty())
-                tempcode = macromap[word];
-                else
-                tempcode = macromap[word]+ " " + tempcode;
-            }
-        }else{
-            if(tempcode.empty())
-                tempcode = macromap[word];
-            else
-                tempcode = macromap[word]+ " " + tempcode;
-        }
-        //that was an ordeal...
-    }else{
-        macromap.erase(macromap.find(word));
 
+    bool finished;
+    while(currlist.size() != 0 && finished == false){
+        slot* tempslot = currlist.back();
+        if(tempslot->topmacros){
+            while(currlist.size() > 1)
+                currlist.pop_back();
+        }
+
+        else if(first_word(tempcode) == "`"){
+            currlist.front()->inset_obj(tempslot->macromap[word]);
+            tempcode.erase(0, first_whitespace(tempcode));
+            if(tempslot->macromap[word].empty())
+                tempslot->macromap.erase(tempslot->macromap.find(word));
+            finished = true;
+        }
+        //yay macros!
+        else if(!tempslot->macromap[word].empty()){
+            if(first_word(tempcode) == "enclosemac"){
+                tempcode.erase(0, first_whitespace(tempcode));
+                if(tempcode.empty())
+                    tempcode = "\"" + tempslot->macromap[word] + "\"";
+                else
+                    tempcode = "\"" + tempslot->macromap[word] + "\"" + tempcode;
+            }else if(first_word(tempcode) == "ignoremac"){
+                tempcode.erase(0, first_whitespace(tempcode));
+                if(currobj.back().code == "0"){
+                    if(tempcode.empty())
+                        tempcode = tempslot->macromap[word];
+                    else
+                        tempcode = tempslot->macromap[word]+ " " + tempcode;
+                }
+            }else{
+                if(tempcode.empty())
+                    tempcode = tempslot->macromap[word];
+                else
+                    tempcode = tempslot->macromap[word]+ " " + tempcode;
+            }
+            finished = true;
+        }
+        currlist.pop_back();
+    }
+    return finished;
+}
+*/
+void slot::wordeval(string word, string& tempcode){
+#define LASTSLOT currentlist.back()->slotlist
+
+        if(first_word(tempcode) == "\'"){
+            inset_obj(word);
+            tempcode.erase(0, first_whitespace(tempcode));
+        }
+        else
+        //if(macrohandler(slotlist, currentlist, word, tempcode)){
+//
+  //      }
+        //else
         if(word == "print"){
             cout << LASTSLOT.back().code;
         }else if(word == "cin"){
@@ -370,8 +419,8 @@ void slot::wordeval(string word, string& tempcode)
         }else if (word == "clean"){
             LASTSLOT.clear();
         }else if(word == "die"){
-	  macromap["die"] = "1";
-	}else if (word == "this"){
+            macromap["die"] = "1";
+        }else if (word == "this"){
             LASTSLOT.push_back(*this);
         }else if (word == "tempcode"){
             inset_obj(tempcode);
@@ -393,6 +442,39 @@ void slot::wordeval(string word, string& tempcode)
                 macromap[macrostring] = macrostring;
             else
                 macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
+        }else if(word == "machere"){
+            string macrostring = LASTSLOT.back().code;
+            string macrostring2 = macrostring;
+            size_t macrosize = last_whitespace(macrostring);
+            if(macrosize == string::npos)
+                LASTSLOT.back().macromap[macrostring] = macrostring;
+            else
+                LASTSLOT.back().macromap[macrostring.erase(0, macrosize + 1)] = macrostring2.erase(macrosize, macrostring2.length());
+        }else if (word == "."){
+            currentlist.back()->macromap.get_slot(LASTSLOT.back().code) = prev_obj();
+        }else if (word == "?"){
+            //macromap.
+            list<slot>::iterator tempiter = LASTSLOT.back().slotlist.begin();
+            /*
+            slot returnedslot = currentlist.back()->macromap.get_slot((*tempiter).code);
+            int itsize = LASTSLOT.back().slotlist.size();
+            //advance(tempiter, 1);
+            cout << itsize;
+            for(int i = 0; i < itsize; ++i){
+                    cerr << (*tempiter).code;
+            advance(tempiter, 1);
+                returnedslot = returnedslot.macromap.get_slot((*tempiter).code);
+            }
+            LASTSLOT.push_back(returnedslot);*/
+            slot returnedslot = currentlist.back()->macromap.get_slot((*tempiter).code);
+            advance(tempiter, 1);
+            int ad = LASTSLOT.back().slotlist.size();
+            for (int i = 1; i < ad; ++i){
+                cerr << (*tempiter).code;
+                returnedslot = returnedslot.macromap.get_slot((*tempiter).code);
+                advance(tempiter, 1);
+            }
+            LASTSLOT.push_back(returnedslot);
         }else if (word == "dprevmacro"){
             string macromeaning = prev_obj().code;
             string macroname = LASTSLOT.back().code;
@@ -495,7 +577,7 @@ void slot::wordeval(string word, string& tempcode)
             inset_obj(word);
         }
     }
-}
+
 
     //finds end of string including tabs as \t and new lines as \n etc.
     //also \" is not counted as end, but " is.
