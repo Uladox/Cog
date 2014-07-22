@@ -51,10 +51,20 @@ void start_all(){
 int main()
 {
 	slot a;
-	a.set_code("( ( red <<( moo ) dog . ) a . ) cat . ( cat a dog ) ? car print");
+	a.set_code("( ( red <<( moo ) dog . ) a . ) cat . ( cat a dog ) ? car");
 	a.slotset();
 	a.eval();
-    // cout << a.macromap.get_slot("cat").macromap.get_slot("a").macromap.get_slot("dog").code;
+	list<slot> b;
+	slot s1;
+	slot s2;
+	slot s3;
+	s1.set_code("cat");
+	s2.set_code("m");
+	s3.set_code("dog");
+	b.push_back(s1);
+	b.push_back(s2);
+	b.push_back(s3);
+	cout << a.macromap.search(b);
     //cout << "\n" << a.get_macs()<<"\n";
     //n["frog"];
     //cout << n["cat"];

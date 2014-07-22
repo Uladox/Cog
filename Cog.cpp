@@ -28,16 +28,28 @@ using namespace std;
 
 struct slot
 {
+	typedef enum
+	{
+		REG,
+		PERMSTR,
+		VAR,
+		FALACY,
+		STATE
+	}SLOTTYPE;
+	SLOTTYPE slotorient = REG;
+
 	bool topmacros = true;
 	struct macrokeeper
 	{
 		list<pair<string, slot> > macroslist;
 		string& operator[](string value);
 		list<pair<string, slot> >::iterator find(string value);
+		list<pair<string, slot> >::iterator find_from_pos(string value, list<pair<string, slot> >::iterator start);//this is why c++ is ugly...I just do not care aanymore
+		list<pair<string, slot> >::iterator find_not_of(string value);
 		void erase(list<pair<string, slot> >::iterator erasable);
 		macrokeeper& macl(string value);
 		slot& get_slot(string value);
-		//	bool search(list<slot> srhprams);
+	       	bool search(list<slot> srhprams);
 	} macromap;
 	
 	list<slot> slotlist; //original name, right?
@@ -152,10 +164,44 @@ list<pair<string, slot> >::iterator slot::macrokeeper::find(string value){
 		advance(iter, 1);
 	return iter;
 }
+list<pair<string, slot> >::iterator slot::macrokeeper::find_from_pos(string value, list<pair<string, slot> >::iterator start){
+	list<pair<string, slot> >::iterator iter = start;
+	while((iter->first != value) && (iter != macroslist.cend()))
+		advance(iter, 1);
+	return iter;
+}
+list<pair<string, slot> >::iterator slot::macrokeeper::find_not_of(string value){
+	list<pair<string, slot> >::iterator iter = macroslist.begin();
+	while((iter->first == value) && (iter != macroslist.cend()))
+		advance(iter, 1);
+	return iter;
+}
 void slot::macrokeeper::erase(list<pair<string,slot>>::iterator erasable){
 	macroslist.erase(erasable);
 }
-
+bool slot::macrokeeper::search(list<slot> srhprams){
+	slot importantslot = srhprams.front();
+	srhprams.pop_front();
+	bool result;
+	list<pair<string, slot> >::iterator srchiter = find(importantslot.code);
+        if(srchiter == macroslist.cend()){
+		result = false;
+	}else if(srhprams.size() == 0){
+		result = true;
+	}else if(importantslot.slotorient == FALACY){
+		result = false;
+	}else if((importantslot.slotorient != VAR) && (srhprams.front().slotorient != STATE)){
+		while ((result == false) && (srchiter != macroslist.cend())) {
+			cerr << "alway the while loop...";
+			result = srchiter->second.macromap.search(srhprams);
+			if(result == false){
+				advance(srchiter, 1);
+				srchiter = find_from_pos(importantslot.code, srchiter);
+			}
+		}				
+	}
+	return result;
+}
 slot slot::prev_obj(){
 	list<slot>::iterator refspot = currentlist.back()->slotlist.begin();
 	advance(refspot, currentlist.back()->slotlist.size() - 2);
